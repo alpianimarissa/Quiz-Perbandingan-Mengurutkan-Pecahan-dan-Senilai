@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kuis Interaktif Pecahan - Kelas 5 SD</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Fredoka & Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        fredoka: ['Fredoka', 'sans-serif'],
+                        poppins: ['Poppins', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            blue: '#2563EB',
+                            indigo: '#4F46E5',
+                            purple: '#7C3AED',
+                            green: '#10B981',
+                            red: '#EF4444',
+                            amber: '#F59E0B'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #F8FAFC;
+        }
+        .font-heading {
+            font-family: 'Fredoka', cursive;
+        }
+        /* Style Komponen Pecahan Tegak Lurus (Stacked Fraction) */
+        .frac {
+            display: inline-flex;
+            flex-direction: column;
+            vertical-align: middle;
+            text-align: center;
+            padding: 0 4px;
+            font-weight: 700;
+            line-height: 1.1;
+            margin: 0 2px;
+        }
+        .frac .num {
+            border-bottom: 2px solid currentColor;
+            padding: 0 3px 1px 3px;
+            display: block;
+        }
+        .frac .den {
+            padding: 1px 3px 0 3px;
+            display: block;
+        }
+
+        /* Custom scrollbar */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
+
+    <!-- Header Utama -->
+    <header class="bg-gradient-to-r from-indigo-700 via-purple-600 to-pink-600 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-2">
+            <div class="flex items-center space-x-3">
+                <div class="bg-white text-indigo-700 p-2.5 rounded-2xl shadow-inner text-2xl font-bold flex items-center justify-center">
+                    🎯
+                </div>
+                <div>
+                    <h1 class="font-heading text-lg sm:text-2xl font-bold tracking-wide">Kuis Master Pecahan 40 Soal</h1>
+                    <p class="text-xs text-indigo-100 hidden sm:block">Matematika Kelas 5 SD • Auto-Save Offline & Interaktif</p>
+                </div>
+            </div>
+
+            <!-- Stats Badge -->
+            <div class="flex items-center space-x-2">
+                <div class="bg-white/15 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/20 text-xs sm:text-sm font-semibold flex items-center gap-2">
+                    <i class="fas fa-check-circle text-emerald-400"></i>
+                    <span>Terjawab: <strong id="header-progress-count">0</strong>/40</span>
+                </div>
+                <button onclick="confirmResetQuiz()" class="bg-rose-500/80 hover:bg-rose-600 text-white text-xs px-3 py-1.5 rounded-xl transition flex items-center gap-1 font-semibold border border-rose-400/40">
+                    <i class="fas fa-redo-alt"></i> <span class="hidden sm:inline">Ulangi Kuis</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-4 py-6 flex-grow w-full grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Kiri: Area Soal Utama (8 Col) -->
+        <section class="lg:col-span-8 flex flex-col space-y-6">
+
+            <!-- Progress Bar Card -->
+            <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+                <div class="flex justify-between items-center text-xs font-bold text-slate-600 mb-2">
+                    <span id="progress-percent-text">Kemajuan Kuis: 0%</span>
+                    <span id="score-live-text">Skor Saat Ini: 0 / 100</span>
+                </div>
+                <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden border border-slate-200">
+                    <div id="progress-bar-fill" class="bg-gradient-to-r from-indigo-500 to-emerald-400 h-full w-0 transition-all duration-300"></div>
+                </div>
+            </div>
+
+            <!-- Question Card -->
+            <div class="bg-white rounded-3xl p-6 shadow-md border border-slate-200 flex flex-col justify-between min-h-[420px] relative">
+                
+                <div>
+                    <!-- Header Soal -->
+                    <div class="flex justify-between items-center border-b pb-3 mb-4 flex-wrap gap-2">
+                        <span id="question-number-badge" class="bg-indigo-100 text-indigo-700 font-bold px-3 py-1 rounded-xl text-sm font-heading">
+                            Soal 1 dari 40
+                        </span>
+                        <span id="question-category-badge" class="bg-slate-100 text-slate-600 font-semibold px-3 py-1 rounded-xl text-xs flex items-center gap-1">
+                            <i class="fas fa-tag text-indigo-500"></i> Membandingkan Pecahan
+                        </span>
+                    </div>
+
+                    <!-- Teks Soal -->
+                    <div class="text-slate-800 text-base sm:text-lg font-medium leading-relaxed mb-6" id="question-text">
+                        Loading soal...
+                    </div>
+
+                    <!-- Area Ilustrasi Visual Opsional -->
+                    <div id="question-illustration" class="hidden my-4 p-4 bg-slate-50 border border-slate-200 rounded-2xl flex justify-center items-center">
+                        <!-- Visual SVG or HTML bars rendered here -->
+                    </div>
+
+                    <!-- Pilihan Jawaban (A, B, C, D) -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="options-container">
+                        <!-- Rendered dynamically -->
+                    </div>
+                </div>
+
+                <!-- Feedback Panel (Muncul Setelah Dijawab) -->
+                <div id="feedback-panel" class="hidden mt-6 p-4 rounded-2xl border transition-all duration-300">
+                    <div class="flex items-start gap-3">
+                        <div id="feedback-icon" class="text-2xl mt-0.5"></div>
+                        <div class="text-xs sm:text-sm">
+                            <h4 id="feedback-title" class="font-bold text-base mb-1"></h4>
+                            <p id="feedback-explanation" class="text-slate-700 leading-relaxed"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Navigasi Soal -->
+                <div class="flex justify-between items-center mt-8 pt-4 border-t border-slate-100">
+                    <button id="btn-prev" onclick="prevQuestion()" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition text-sm flex items-center gap-2">
+                        <i class="fas fa-arrow-left"></i> Sebelumnya
+                    </button>
+                    <span class="text-xs font-semibold text-slate-400 hidden sm:inline" id="status-saved-indicator">
+                        <i class="fas fa-save text-emerald-500 mr-1"></i>Tersimpan Otomatis
+                    </span>
+                    <button id="btn-next" onclick="nextQuestion()" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md shadow-indigo-200 transition text-sm flex items-center gap-2">
+                        Selanjutnya <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- Kanan: Navigasi Nomor Soal Grid (4 Col) -->
+        <aside class="lg:col-span-4 space-y-6">
+            
+            <!-- Grid Card -->
+            <div class="bg-white rounded-3xl p-5 shadow-md border border-slate-200 sticky top-[80px]">
+                <div class="flex justify-between items-center mb-4 pb-2 border-b">
+                    <h3 class="font-heading font-bold text-slate-800 text-base flex items-center gap-2">
+                        <i class="fas fa-th text-indigo-600"></i> Navigasi Soal
+                    </h3>
+                    <span class="text-xs text-slate-500 font-medium">Klik angka untuk lompat</span>
+                </div>
+
+                <!-- Filter Kategori Grid -->
+                <div class="flex gap-1.5 overflow-x-auto no-scrollbar mb-4 text-[11px] font-semibold">
+                    <button onclick="filterGrid('all')" id="filter-btn-all" class="px-2.5 py-1 rounded-lg bg-indigo-600 text-white whitespace-nowrap">Semua (40)</button>
+                    <button onclick="filterGrid('unanswered')" id="filter-btn-unanswered" class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 whitespace-nowrap">Belum</button>
+                    <button onclick="filterGrid('correct')" id="filter-btn-correct" class="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-700 hover:bg-emerald-200 whitespace-nowrap">Benar</button>
+                    <button onclick="filterGrid('incorrect')" id="filter-btn-incorrect" class="px-2.5 py-1 rounded-lg bg-rose-100 text-rose-700 hover:bg-rose-200 whitespace-nowrap">Salah</button>
+                </div>
+
+                <!-- Grid 40 Nomor -->
+                <div class="grid grid-cols-5 gap-2 max-h-[340px] overflow-y-auto pr-1" id="question-grid">
+                    <!-- Rendered by JS -->
+                </div>
+
+                <!-- Legenda Status -->
+                <div class="mt-5 pt-3 border-t grid grid-cols-2 gap-2 text-xs text-slate-600 font-medium">
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-3 h-3 rounded-md bg-emerald-500 inline-block"></span> Benar
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-3 h-3 rounded-md bg-rose-500 inline-block"></span> Salah
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-3 h-3 rounded-md bg-slate-200 inline-block"></span> Belum Diisi
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-3 h-3 rounded-md ring-2 ring-indigo-600 bg-white inline-block"></span> Posisi Aktif
+                    </div>
+                </div>
+
+                <!-- Tombol Selesai Kuis -->
+                <button onclick="finishQuizSummary()" class="w-full mt-5 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold rounded-2xl shadow-lg shadow-emerald-200 transition flex items-center justify-center gap-2 text-sm">
+                    <i class="fas fa-trophy"></i> Lihat Hasil Akhir
+                </button>
+            </div>
+
+        </aside>
+
+    </main>
+
+    <!-- Modal Ringkasan Hasil Akhir Kuis -->
+    <div id="result-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 text-center transform transition-all scale-95 opacity-0" id="result-modal-content">
+            
+            <div class="text-6xl mb-3" id="result-emoji">🏆</div>
+            <h2 class="font-heading text-2xl font-bold text-slate-800 mb-1" id="result-title">Hasil Kuis Pecahan</h2>
+            <p class="text-xs text-slate-500 mb-6">Modul Evaluasi Pemahaman Pecahan Kelas 5 SD</p>
+
+            <!-- Big Score Circle -->
+            <div class="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-4 border border-indigo-100 mb-6 flex justify-around items-center">
+                <div>
+                    <span class="text-xs text-slate-500 block font-semibold">SKOR AKHIR</span>
+                    <span class="text-4xl font-bold font-heading text-indigo-600" id="result-score-num">0</span>
+                    <span class="text-xs text-slate-400 block">dari 100</span>
+                </div>
+                <div class="h-10 w-px bg-slate-200"></div>
+                <div>
+                    <span class="text-xs text-slate-500 block font-semibold">BENAR / SALAH</span>
+                    <span class="text-xl font-bold text-slate-800" id="result-correct-count">0 / 40</span>
+                    <span class="text-xs text-slate-400 block">soal teratasi</span>
+                </div>
+            </div>
+
+            <!-- Category Breakdown -->
+            <div class="text-left bg-slate-50 p-4 rounded-2xl mb-6 border border-slate-200 text-xs space-y-2" id="result-breakdown">
+                <!-- Filled via JS -->
+            </div>
+
+            <!-- Modal Action Buttons -->
+            <div class="flex gap-3">
+                <button onclick="closeResultModal()" class="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition text-sm">
+                    Tutup & Periksa
+                </button>
+                <button onclick="confirmResetQuiz()" class="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md transition text-sm">
+                    Coba Lagi
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-slate-800 text-slate-400 py-6 text-center text-xs mt-auto">
+        <div class="max-w-7xl mx-auto px-4">
+            <p class="mb-1">Modul Kuis Interaktif Matematika Kelas 5 SD - Membandingkan, Mengurutkan & Pecahan Senilai</p>
+            <p class="text-slate-500">Fitur Simpan Otomatis Aktif (Penyimpanan Lokal Browser)</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // Helper untuk membuat HTML Pecahan Tegak Lurus
+        function f(num, den) {
+            return `<span class="frac"><span class="num">${num}</span><span class="den">${den}</span></span>`;
+        }
+
+        // Database 40 Soal Matematika Pecahan Kelas 5 SD
+        const quizData = [
+            // --- KATEGORI 1: MEMBANDINGKAN PENYEBUT SAMA (Soal 1-8) ---
+            {
+                id: 1,
+                category: "Membandingkan (Penyebut Sama)",
+                question: `Tanda perbandingan yang tepat untuk ${f(3, 8)} ... ${f(7, 8)} adalah ...`,
+                options: ["<", ">", "=", "Tidak dapat ditentukan"],
+                correctIndex: 0, // A
+                explanation: `Karena penyebutnya sama-sama 8, kita cukup membandingkan pembilangnya. Karena 3 < 7, maka ${f(3, 8)} < ${f(7, 8)}.`
+            },
+            {
+                id: 2,
+                category: "Membandingkan (Penyebut Sama)",
+                question: `Bandingkan pecahan berikut: ${f(9, 11)} ... ${f(5, 11)}. Simbol yang benar adalah ...`,
+                options: ["<", ">", "=", "≤"],
+                correctIndex: 1, // B
+                explanation: `Penyebut sama (11). Pembilang 9 lebih besar dari 5 (9 > 5), sehingga ${f(9, 11)} > ${f(5, 11)}.`
+            },
+            {
+                id: 3,
+                category: "Membandingkan (Penyebut Sama)",
+                question: `Andi minum ${f(4, 10)} liter jus jeruk, sedangkan Budi minum ${f(6, 10)} liter jus jeruk. Siapakah yang minum jus lebih banyak?`,
+                options: ["Andi", "Budi", "Sama banyak", "Tidak ada yang minum"],
+                correctIndex: 1, // B
+                explanation: `Penyebutnya sama (10). Karena ${f(6, 10)} > ${f(4, 10)}, Budi minum lebih banyak jus daripada Andi.`
+            },
+            {
+                id: 4,
+                category: "Membandingkan (Penyebut Sama)",
+                question: `Isilah titik-titik berikut dengan simbol yang benar: ${f(12, 15)} ... ${f(12, 15)}`,
+                options: [">", "<", "=", "≠"],
+                correctIndex: 2, // C
+                explanation: `Kedua pecahan memiliki pembilang dan penyebut yang persis sama, sehingga nilainya sama dengan (=).`
+            },
+            {
+                id: 5,
+                category: "Membandingkan (Penyebut Sama)",
+                question: `Manakah dari pernyataan perbandingan pecahan di bawah ini yang BENAR?`,
+                options: [
+                    `${f(2, 9)} > ${f(5, 9)}`,
+                    `${f(1, 7)} > ${f(4, 7)}`,
+                    `${f(5, 12)} > ${f(2, 12)}`,
+                    `${f(3, 10)} = ${f(7, 10)}`
+                ],
+                correctIndex: 2, // C
+                explanation: `Pada pilihan C, penyebutnya sama (12) dan pembilangnya 5 > 2, sehingga ${f(5, 12)} > ${f(2, 12)} adalah pernyataan yang benar.`
+            },
+            {
+                id: 6,
+                category: "Membandingkan (Penyebut Sama)",
+                question: `Ibu memotong kue ulang tahun menjadi 8 bagian sama besar. Ani mendapat ${f(2, 8)} bagian dan Edo mendapat ${f(5, 8)} bagian. Bagian milik siapa yang lebih KECIL?`,
+                options: ["Edo", "Sama saja", "Ani", "Ibu"],
+                correctIndex: 2, // C
+                explanation: `Karena 2 < 5 pada penyebut 8, maka ${f(2, 8)} < ${f(5, 8)}. Jadi potongan milik Ani lebih kecil.`
+            },
+            {
+                id: 7,
+                category: "Membandingkan (Penyebut Sama)",
+                question: `Tanda perbandingan untuk ${f(7, 20)} ... ${f(11, 20)} adalah ...`,
+                options: [">", "<", "=", "≥"],
+                correctIndex: 1, // B
+                explanation: `Penyebut sama (20). Pembilang 7 lebih kecil dari 11 (7 < 11), maka ${f(7, 20)} < ${f(11, 20)}.`
+            },
+            {
+                id: 8,
+                category: "Membandingkan (Penyebut Sama)",
+                question: `Perhatikan dua kalimat matematika berikut:<br>1) ${f(1, 6)} ... ${f(3, 6)}<br>2) ${f(5, 6)} ... ${f(2, 6)}<br>Urutan simbol yang benar untuk (1) dan (2) adalah ...`,
+                options: [
+                    "> dan <",
+                    "< dan >",
+                    "= dan >",
+                    "< dan <"
+                ],
+                correctIndex: 1, // B
+                explanation: `Untuk (1) ${f(1, 6)} < ${f(3, 6)} dan untuk (2) ${f(5, 6)} > ${f(2, 6)}. Jadi jawabannya adalah < dan >.`
+            },
+
+            // --- KATEGORI 2: MEMBANDINGKAN PEMBILANG SAMA (Soal 9-16) ---
+            {
+                id: 9,
+                category: "Membandingkan (Pembilang Sama)",
+                question: `Bandingkan pecahan berikut: ${f(2, 5)} ... ${f(2, 3)}. Tanda yang tepat adalah ...`,
+                options: [">", "<", "=", "≥"],
+                correctIndex: 1, // B
+                explanation: `Jika pembilang sama (2), pecahan dengan penyebut LEBIH BESAR justru bernilai LEBIH KECIL. Karena 5 > 3, maka ${f(2, 5)} < ${f(2, 3)}.`
+            },
+            {
+                id: 10,
+                category: "Membandingkan (Pembilang Sama)",
+                question: `Tanda perbandingan yang tepat untuk ${f(4, 7)} ... ${f(4, 9)} adalah ...`,
+                options: [">", "<", "=", "≤"],
+                correctIndex: 0, // A
+                explanation: `Pembilang sama-sama 4. Penyebut 7 lebih kecil dari 9, artinya ukuran potongan per-7 lebih besar. Jadi ${f(4, 7)} > ${f(4, 9)}.`
+            },
+            {
+                id: 11,
+                category: "Membandingkan (Pembilang Sama)",
+                question: `Pipa A memiliki panjang ${f(3, 4)} meter dan Pipa B memiliki panjang ${f(3, 8)} meter. Pipa manakah yang lebih PANJANG?`,
+                options: ["Pipa B", "Pipa A", "Kedua pipa sama panjang", "Tidak dapat diukur"],
+                correctIndex: 1, // B
+                explanation: `Pembilang sama (3). Penyebut 4 < 8, sehingga ${f(3, 4)} > ${f(3, 8)}. Pipa A lebih panjang.`
+            },
+            {
+                id: 12,
+                category: "Membandingkan (Pembilang Sama)",
+                question: `Lengkapilah dengan simbol yang benar: ${f(5, 12)} ... ${f(5, 6)}`,
+                options: [">", "=", "<", "≠"],
+                correctIndex: 2, // C
+                explanation: `Pembilang sama (5). Penyebut 12 > 6, sehingga pecahan ${f(5, 12)} nilainya lebih kecil (<) dari ${f(5, 6)}.`
+            },
+            {
+                id: 13,
+                category: "Membandingkan (Pembilang Sama)",
+                question: `Di antara pecahan ${f(1, 2)}, ${f(1, 4)}, ${f(1, 3)}, dan ${f(1, 6)}, manakah pecahan yang nilainya PALING BESAR?`,
+                options: [f(1, 6), f(1, 4), f(1, 3), f(1, 2)],
+                correctIndex: 3, // D
+                explanation: `Semua pembilang angka 1. Pecahan dengan penyebut terkecil (2) memiliki nilai paling besar. Jadi ${f(1, 2)} adalah yang terbesar.`
+            },
+            {
+                id: 14,
+                category: "Membandingkan (Pembilang Sama)",
+                question: `Manakah pecahan yang nilainya PALING KECIL di antara ${f(3, 5)}, ${f(3, 10)}, ${f(3, 7)}, dan ${f(3, 4)}?`,
+                options: [f(3, 10), f(3, 4), f(3, 5), f(3, 7)],
+                correctIndex: 0, // A
+                explanation: `Pembilang sama (3). Penyebut terbesar adalah 10, sehingga ${f(3, 10)} adalah pecahan bernilai paling kecil.`
+            },
+            {
+                id: 15,
+                category: "Membandingkan (Pembilang Sama)",
+                question: `Tanda perbandingan untuk ${f(7, 15)} ... ${f(7, 10)} adalah ...`,
+                options: [">", "<", "=", "≥"],
+                correctIndex: 1, // B
+                explanation: `Pembilang sama (7). Karena penyebut 15 > 10, maka ${f(7, 15)} < ${f(7, 10)}.`
+            },
+            {
+                id: 16,
+                category: "Membandingkan (Pembilang Sama)",
+                question: `Mengapa ${f(2, 3)} lebih besar nilainya daripada ${f(2, 7)}?`,
+                options: [
+                    "Karena angka 3 lebih besar dari 7",
+                    "Karena jika suatu benda dibagi 3 bagian, tiap bagiannya lebih besar dibanding dibagi 7 bagian",
+                    "Karena pembilangnya berbeda",
+                    "Karena 2 dikali 3 lebih besar dari 2 dikali 7"
+                ],
+                correctIndex: 1, // B
+                explanation: `Penyebut menunjukkan pembagi. Semakin sedikit pembaginya (3 dibanding 7), maka ukuran tiap potongannya akan semakin besar.`
+            },
+
+            // --- KATEGORI 3: MEMBANDINGKAN PEMBILANG & PENYEBUT BEDA (Soal 17-24) ---
+            {
+                id: 17,
+                category: "Membandingkan (Keduanya Beda)",
+                question: `Gunakan perkalian silang! Bandingkan ${f(1, 2)} ... ${f(3, 5)}. Tanda yang tepat adalah ...`,
+                options: [">", "<", "=", "≥"],
+                correctIndex: 1, // B
+                explanation: `Perkalian silang: (1 × 5) = 5 dan (3 × 2) = 6. Karena 5 < 6, maka ${f(1, 2)} < ${f(3, 5)}.`
+            },
+            {
+                id: 18,
+                category: "Membandingkan (Keduanya Beda)",
+                question: `Hasil perbandingan untuk ${f(3, 4)} ... ${f(2, 3)} yang tepat adalah ...`,
+                options: [">", "<", "=", "≤"],
+                correctIndex: 0, // A
+                explanation: `Perkalian silang: (3 × 3) = 9 dan (2 × 4) = 8. Karena 9 > 8, maka ${f(3, 4)} > ${f(2, 3)}.`
+            },
+            {
+                id: 19,
+                category: "Membandingkan (Keduanya Beda)",
+                question: `Isilah tanda perbandingan yang tepat: ${f(5, 6)} ... ${f(7, 8)}`,
+                options: [">", "=", "<", "≠"],
+                correctIndex: 2, // C
+                explanation: `Perkalian silang: (5 × 8) = 40 dan (7 × 6) = 42. Karena 40 < 42, maka ${f(5, 6)} < ${f(7, 8)}.`
+            },
+            {
+                id: 20,
+                category: "Membandingkan (Keduanya Beda)",
+                question: `Bandingkan pecahan ${f(4, 5)} ... ${f(8, 10)}. Simbol yang benar adalah ...`,
+                options: [">", "<", "=", "≠"],
+                correctIndex: 2, // C
+                explanation: `Perkalian silang: (4 × 10) = 40 dan (8 × 5) = 40. Karena hasilnya sama (40 = 40), maka ${f(4, 5)} = ${f(8, 10)}.`
+            },
+            {
+                id: 21,
+                category: "Membandingkan (Keduanya Beda)",
+                question: `Sinta memiliki pita sepanjang ${f(2, 3)} meter dan Dewi memiliki pita ${f(3, 4)} meter. Tali pita milik siapakah yang lebih panjang?`,
+                options: ["Sinta", "Dewi", "Sama panjang", "Tidak dapat diukur"],
+                correctIndex: 1, // B
+                explanation: `Samakan penyebut menjadi 12: Sinta = ${f(8, 12)} meter, Dewi = ${f(9, 12)} meter. Karena 9/12 > 8/12, pita Dewi lebih panjang.`
+            },
+            {
+                id: 22,
+                category: "Membandingkan (Keduanya Beda)",
+                question: `Tanda yang benar untuk mengisi ${f(5, 8)} ... ${f(1, 2)} adalah ...`,
+                options: [">", "<", "=", "≤"],
+                correctIndex: 0, // A
+                explanation: `Ubah ${f(1, 2)} menjadi pecahan berpenyebut 8, yaitu ${f(4, 8)}. Karena 5/8 > 4/8, maka ${f(5, 8)} > ${f(1, 2)}.`
+            },
+            {
+                id: 23,
+                category: "Membandingkan (Keduanya Beda)",
+                question: `Manakah hubungan perbandingan pecahan berikut yang SALAH?`,
+                options: [
+                    `${f(1, 3)} < ${f(1, 2)}`,
+                    `${f(2, 5)} > ${f(3, 4)}`,
+                    `${f(3, 5)} < ${f(4, 5)}`,
+                    `${f(1, 4)} = ${f(2, 8)}`
+                ],
+                correctIndex: 1, // B
+                explanation: `Pilihan B salah karena (2 × 4 = 8) lebih kecil dari (3 × 5 = 15), seharusnya ${f(2, 5)} < ${f(3, 4)}.`
+            },
+            {
+                id: 24,
+                category: "Membandingkan (Keduanya Beda)",
+                question: `Bandingkan pecahan ${f(3, 7)} ... ${f(4, 9)}. Tanda yang tepat adalah ...`,
+                options: [">", "<", "=", "≥"],
+                correctIndex: 1, // B
+                explanation: `Perkalian silang: (3 × 9) = 27 dan (4 × 7) = 28. Karena 27 < 28, maka ${f(3, 7)} < ${f(4, 9)}.`
+            },
+
+            // --- KATEGORI 4: MENGURUTKAN PECAHAN (Soal 25-32) ---
+            {
+                id: 25,
+                category: "Mengurutkan Pecahan",
+                question: `Urutkan pecahan berikut dari yang TERKECIL: ${f(2, 9)}, ${f(7, 9)}, ${f(5, 9)}`,
+                options: [
+                    `${f(7, 9)}, ${f(5, 9)}, ${f(2, 9)}`,
+                    `${f(2, 9)}, ${f(5, 9)}, ${f(7, 9)}`,
+                    `${f(5, 9)}, ${f(2, 9)}, ${f(7, 9)}`,
+                    `${f(2, 9)}, ${f(7, 9)}, ${f(5, 9)}`
+                ],
+                correctIndex: 1, // B
+                explanation: `Penyebut sama (9). Kita urutkan pembilang dari yang terkecil: 2, 5, 7. Urutannya adalah ${f(2, 9)}, ${f(5, 9)}, ${f(7, 9)}.`
+            },
+            {
+                id: 26,
+                category: "Mengurutkan Pecahan",
+                question: `Urutkan pecahan berikut dari yang TERBESAR: ${f(3, 4)}, ${f(3, 8)}, ${f(3, 5)}`,
+                options: [
+                    `${f(3, 8)}, ${f(3, 5)}, ${f(3, 4)}`,
+                    `${f(3, 4)}, ${f(3, 8)}, ${f(3, 5)}`,
+                    `${f(3, 4)}, ${f(3, 5)}, ${f(3, 8)}`,
+                    `${f(3, 5)}, ${f(3, 4)}, ${f(3, 8)}`
+                ],
+                correctIndex: 2, // C
+                explanation: `Pembilang sama (3). Penyebut terkecil nilainya paling besar. Urutan dari terbesar: ${f(3, 4)}, ${f(3, 5)}, ${f(3, 8)}.`
+            },
+            {
+                id: 27,
+                category: "Mengurutkan Pecahan",
+                question: `Urutkan pecahan berikut dari yang TERKECIL: ${f(1, 2)}, ${f(1, 4)}, ${f(3, 4)}`,
+                options: [
+                    `${f(1, 4)}, ${f(1, 2)}, ${f(3, 4)}`,
+                    `${f(1, 2)}, ${f(1, 4)}, ${f(3, 4)}`,
+                    `${f(3, 4)}, ${f(1, 2)}, ${f(1, 4)}`,
+                    `${f(1, 4)}, ${f(3, 4)}, ${f(1, 2)}`
+                ],
+                correctIndex: 0, // A
+                explanation: `Samakan penyebut menjadi 4: ${f(1, 2)} = ${f(2, 4)}. Urutan pembilang (1, 2, 3) dari yang terkecil: ${f(1, 4)}, ${f(1, 2)}, ${f(3, 4)}.`
+            },
+            {
+                id: 28,
+                category: "Mengurutkan Pecahan",
+                question: `Urutkan pecahan berikut dari yang TERBESAR: ${f(2, 3)}, ${f(1, 6)}, ${f(1, 2)}`,
+                options: [
+                    `${f(1, 6)}, ${f(1, 2)}, ${f(2, 3)}`,
+                    `${f(2, 3)}, ${f(1, 6)}, ${f(1, 2)}`,
+                    `${f(1, 2)}, ${f(2, 3)}, ${f(1, 6)}`,
+                    `${f(2, 3)}, ${f(1, 2)}, ${f(1, 6)}`
+                ],
+                correctIndex: 3, // D
+                explanation: `Samakan penyebut menjadi 6: ${f(2, 3)} = ${f(4, 6)}, ${f(1, 2)} = ${f(3, 6)}, ${f(1, 6)} = ${f(1, 6)}. Dari yang terbesar: ${f(2, 3)}, ${f(1, 2)}, ${f(1, 6)}.`
+            },
+            {
+                id: 29,
+                category: "Mengurutkan Pecahan",
+                question: `Susunlah pecahan ${f(3, 10)}, ${f(3, 5)}, dan ${f(1, 2)} mulai dari yang TERKECIL!`,
+                options: [
+                    `${f(3, 10)}, ${f(1, 2)}, ${f(3, 5)}`,
+                    `${f(1, 2)}, ${f(3, 10)}, ${f(3, 5)}`,
+                    `${f(3, 5)}, ${f(1, 2)}, ${f(3, 10)}`,
+                    `${f(3, 10)}, ${f(3, 5)}, ${f(1, 2)}`
+                ],
+                correctIndex: 0, // A
+                explanation: `Ubah ke penyebut 10: ${f(3, 10)}, ${f(1, 2)} = ${f(5, 10)}, dan ${f(3, 5)} = ${f(6, 10)}. Urutan dari yang terkecil: ${f(3, 10)}, ${f(1, 2)}, ${f(3, 5)}.`
+            },
+            {
+                id: 30,
+                category: "Mengurutkan Pecahan",
+                question: `Tiga siswa berlari mengelilingi lapangan. Doni menyelesaikan ${f(2, 5)} putaran, Eka ${f(3, 10)} putaran, dan Fani ${f(1, 2)} putaran. Siapakah yang berlari PALING JAUH?`,
+                options: ["Eka", "Doni", "Fani", "Doni dan Eka"],
+                correctIndex: 2, // C
+                explanation: `Samakan penyebut ke 10: Doni = ${f(4, 10)}, Eka = ${f(3, 10)}, Fani = ${f(5, 10)}. Fani berlari paling jauh (${f(5, 10)} = ${f(1, 2)}).`
+            },
+            {
+                id: 31,
+                category: "Mengurutkan Pecahan",
+                question: `Urutan pecahan ${f(4, 5)}, ${f(2, 5)}, dan ${f(3, 5)} dari yang TERBESAR adalah ...`,
+                options: [
+                    `${f(2, 5)}, ${f(3, 5)}, ${f(4, 5)}`,
+                    `${f(4, 5)}, ${f(3, 5)}, ${f(2, 5)}`,
+                    `${f(3, 5)}, ${f(4, 5)}, ${f(2, 5)}`,
+                    `${f(4, 5)}, ${f(2, 5)}, ${f(3, 5)}`
+                ],
+                correctIndex: 1, // B
+                explanation: `Penyebut sama (5). Urutkan pembilang dari terbesar ke terkecil: 4, 3, 2. Hasilnya ${f(4, 5)}, ${f(3, 5)}, ${f(2, 5)}.`
+            },
+            {
+                id: 32,
+                category: "Mengurutkan Pecahan",
+                question: `Urutkan pecahan berikut dari yang TERKECIL: ${f(1, 3)}, ${f(2, 9)}, ${f(4, 9)}`,
+                options: [
+                    `${f(2, 9)}, ${f(1, 3)}, ${f(4, 9)}`,
+                    `${f(1, 3)}, ${f(2, 9)}, ${f(4, 9)}`,
+                    `${f(4, 9)}, ${f(1, 3)}, ${f(2, 9)}`,
+                    `${f(2, 9)}, ${f(4, 9)}, ${f(1, 3)}`
+                ],
+                correctIndex: 0, // A
+                explanation: `Ubah ${f(1, 3)} menjadi ${f(3, 9)}. Urutan pembilang dari yang terkecil adalah 2, 3, 4. Pecahannya: ${f(2, 9)}, ${f(1, 3)}, ${f(4, 9)}.`
+            },
+
+            // --- KATEGORI 5: PECAHAN SENILAI (Soal 33-40) ---
+            {
+                id: 33,
+                category: "Pecahan Senilai",
+                question: `Manakah pecahan di bawah ini yang SENILAI dengan ${f(2, 3)}?`,
+                options: [f(4, 9), f(6, 9), f(5, 6), f(3, 4)],
+                correctIndex: 1, // B
+                explanation: `Kalikan pembilang dan penyebut ${f(2, 3)} dengan angka 3: (2 × 3) / (3 × 3) = ${f(6, 9)}.`
+            },
+            {
+                id: 34,
+                category: "Pecahan Senilai",
+                question: `Isilah titik-titik pada pecahan senilai berikut: ${f(3, 4)} = ${f("...", 12)}`,
+                options: ["6", "8", "9", "10"],
+                correctIndex: 2, // C
+                explanation: `Penyebut berubah dari 4 ke 12 (dikalikan 3). Maka pembilang juga dikali 3: (3 × 3) = 9.`
+            },
+            {
+                id: 35,
+                category: "Pecahan Senilai",
+                question: `Berapakah angka pengganti titik-titik agar menjadi pecahan senilai: ${f("...", 5)} = ${f(8, 20)}?`,
+                options: ["2", "4", "3", "5"],
+                correctIndex: 0, // A
+                explanation: `Dari penyebut 20 menjadi 5 dibagikan 4 (20 ÷ 4 = 5). Pembilangnya juga dibagi 4: (8 ÷ 4 = 2). Jawabannya 2.`
+            },
+            {
+                id: 36,
+                category: "Pecahan Senilai",
+                question: `Bentuk paling sederhana dari pecahan ${f(12, 18)} adalah ...`,
+                options: [f(6, 9), f(3, 4), f(2, 3), f(1, 2)],
+                correctIndex: 2, // C
+                explanation: `Bagi pembilang dan penyebut dengan FPB-nya yaitu 6: (12 ÷ 6) / (18 ÷ 6) = ${f(2, 3)}.`
+            },
+            {
+                id: 37,
+                category: "Pecahan Senilai",
+                question: `Manakah di antara kelompok pecahan berikut yang semuanya SENILAI?`,
+                options: [
+                    `${f(1, 2)}, ${f(2, 4)}, ${f(3, 6)}, ${f(4, 8)}`,
+                    `${f(1, 3)}, ${f(2, 6)}, ${f(3, 8)}, ${f(4, 12)}`,
+                    `${f(2, 5)}, ${f(4, 10)}, ${f(5, 15)}, ${f(8, 20)}`,
+                    `${f(3, 4)}, ${f(6, 8)}, ${f(9, 12)}, ${f(10, 15)}`
+                ],
+                correctIndex: 0, // A
+                explanation: `Pilihan A semua bernilai setengah (1/2) jika disederhanakan: ${f(1, 2)} = ${f(2, 4)} = ${f(3, 6)} = ${f(4, 8)}.`
+            },
+            {
+                id: 38,
+                category: "Pecahan Senilai",
+                question: `Pecahan berikut ini yang TIDAK senilai dengan ${f(3, 5)} adalah ...`,
+                options: [f(6, 10), f(9, 15), f(12, 20), f(9, 20)],
+                correctIndex: 3, // D
+                explanation: `${f(3, 5)} jika dikali 3 menghasilkan ${f(9, 15)}, bukan ${f(9, 20)}. Jadi ${f(9, 20)} tidak senilai.`
+            },
+            {
+                id: 39,
+                category: "Pecahan Senilai",
+                question: `Ibu memotong kue semangka menjadi 12 bagian sama besar. Adik memakan 4 bagian (${f(4, 12)}). Pecahan paling sederhana yang senilai dengan bagian adik adalah ...`,
+                options: [f(1, 3), f(1, 4), f(2, 5), f(1, 2)],
+                correctIndex: 0, // A
+                explanation: `Sederhanakan ${f(4, 12)} dengan membagi pembilang dan penyebut angka 4: (4 ÷ 4) / (12 ÷ 4) = ${f(1, 3)}.`
+            },
+            {
+                id: 40,
+                category: "Pecahan Senilai",
+                question: `Sederhanakanlah pecahan ${f(15, 25)} hingga ke bentuk paling sederhana!`,
+                options: [f(3, 4), f(3, 5), f(2, 5), f(5, 7)],
+                correctIndex: 1, // B
+                explanation: `Bagilah pembilang dan penyebut dengan angka 5: (15 ÷ 5) / (25 ÷ 5) = ${f(3, 5)}.`
+            }
+        ];
+
+        // State Management Kuis
+        const STORAGE_KEY = 'quiz_pecahan_kls5_state_v1';
+        let currentQuestionIndex = 0;
+        let userAnswers = {}; // { [qIndex]: selectedOptionIndex }
+        let currentFilter = 'all';
+
+        // Initialize App
+        window.addEventListener('DOMContentLoaded', () => {
+            loadStateFromStorage();
+            renderQuestionGrid();
+            displayCurrentQuestion();
+            updateProgressBar();
+        });
+
+        // Save & Load Functions (Persistence Layer)
+        function saveStateToStorage() {
+            const state = {
+                currentQuestionIndex,
+                userAnswers
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            
+            // Visual indicator
+            const savedEl = document.getElementById('status-saved-indicator');
+            if(savedEl) {
+                savedEl.classList.add('opacity-100');
+                setTimeout(() => savedEl.classList.remove('opacity-100'), 1000);
+            }
+        }
+
+        function loadStateFromStorage() {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (raw) {
+                try {
+                    const data = JSON.parse(raw);
+                    if (data.userAnswers) userAnswers = data.userAnswers;
+                    if (typeof data.currentQuestionIndex === 'number') currentQuestionIndex = data.currentQuestionIndex;
+                } catch (e) {
+                    console.error("Gagal memuat state dari storage", e);
+                }
+            }
+        }
+
+        function confirmResetQuiz() {
+            if (confirm("Apakah Anda yakin ingin mengulang kuis dari awal? Seluruh jawaban tersimpan akan dihapus.")) {
+                localStorage.removeItem(STORAGE_KEY);
+                userAnswers = {};
+                currentQuestionIndex = 0;
+                renderQuestionGrid();
+                displayCurrentQuestion();
+                updateProgressBar();
+                closeResultModal();
+            }
+        }
+
+        // Render Navigation Grid
+        function renderQuestionGrid() {
+            const gridContainer = document.getElementById('question-grid');
+            gridContainer.innerHTML = '';
+
+            quizData.forEach((q, idx) => {
+                const isAnswered = userAnswers.hasOwnProperty(idx);
+                const selectedOpt = userAnswers[idx];
+                const isCorrect = isAnswered && selectedOpt === q.correctIndex;
+
+                // Check filter visibility
+                let isVisible = true;
+                if (currentFilter === 'unanswered' && isAnswered) isVisible = false;
+                if (currentFilter === 'correct' && (!isAnswered || !isCorrect)) isVisible = false;
+                if (currentFilter === 'incorrect' && (!isAnswered || isCorrect)) isVisible = false;
+
+                if (!isVisible) return;
+
+                const btn = document.createElement('button');
+                btn.className = `h-10 text-xs font-bold rounded-xl flex items-center justify-center border transition-all duration-150 ${getGridTileStyle(idx, isAnswered, isCorrect)}`;
+                btn.innerText = idx + 1;
+                btn.onclick = () => jumpToQuestion(idx);
+
+                gridContainer.appendChild(btn);
+            });
+        }
+
+        function getGridTileStyle(idx, isAnswered, isCorrect) {
+            const isCurrent = idx === currentQuestionIndex;
+            let style = "";
+
+            if (isCurrent) {
+                style += "ring-2 ring-indigo-600 ring-offset-1 font-extrabold z-10 ";
+            }
+
+            if (isAnswered) {
+                if (isCorrect) {
+                    style += "bg-emerald-500 text-white border-emerald-600 shadow-sm";
+                } else {
+                    style += "bg-rose-500 text-white border-rose-600 shadow-sm";
+                }
+            } else {
+                style += "bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200";
+            }
+
+            return style;
+        }
+
+        function filterGrid(filterType) {
+            currentFilter = filterType;
+            
+            // Update active filter button styling
+            ['all', 'unanswered', 'correct', 'incorrect'].forEach(f => {
+                const btn = document.getElementById(`filter-btn-${f}`);
+                if (f === filterType) {
+                    btn.className = "px-2.5 py-1 rounded-lg bg-indigo-600 text-white whitespace-nowrap font-bold";
+                } else {
+                    btn.className = "px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 whitespace-nowrap font-medium";
+                }
+            });
+
+            renderQuestionGrid();
+        }
+
+        // Display Active Question
+        function displayCurrentQuestion() {
+            const q = quizData[currentQuestionIndex];
+            
+            // Update Badges & Question Text
+            document.getElementById('question-number-badge').innerText = `Soal ${currentQuestionIndex + 1} dari 40`;
+            document.getElementById('question-category-badge').innerHTML = `<i class="fas fa-tag text-indigo-500 mr-1"></i> ${q.category}`;
+            document.getElementById('question-text').innerHTML = q.question;
+
+            // Render Options
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+
+            const isAnswered = userAnswers.hasOwnProperty(currentQuestionIndex);
+            const userSelected = userAnswers[currentQuestionIndex];
+
+            const optionLabels = ['A', 'B', 'C', 'D'];
+
+            q.options.forEach((optText, optIdx) => {
+                const optBtn = document.createElement('button');
+                optBtn.disabled = isAnswered;
+
+                let btnStyle = "w-full p-4 rounded-2xl border-2 text-left transition-all duration-200 flex items-center gap-3 text-sm sm:text-base font-semibold ";
+
+                if (isAnswered) {
+                    if (optIdx === q.correctIndex) {
+                        btnStyle += "bg-emerald-50 border-emerald-500 text-emerald-900 shadow-sm";
+                    } else if (optIdx === userSelected) {
+                        btnStyle += "bg-rose-50 border-rose-500 text-rose-900 shadow-sm";
+                    } else {
+                        btnStyle += "bg-slate-50 border-slate-200 text-slate-400 opacity-60";
+                    }
+                } else {
+                    btnStyle += "bg-white border-slate-200 text-slate-700 hover:border-indigo-400 hover:bg-indigo-50/50 shadow-sm";
+                }
+
+                optBtn.className = btnStyle;
+                optBtn.innerHTML = `
+                    <span class="w-8 h-8 rounded-xl font-bold flex items-center justify-center text-xs ${getOptionBadgeStyle(optIdx, isAnswered, q.correctIndex, userSelected)}">
+                        ${optionLabels[optIdx]}
+                    </span>
+                    <span class="flex-1">${optText}</span>
+                `;
+
+                optBtn.onclick = () => selectAnswer(optIdx);
+                container.appendChild(optBtn);
+            });
+
+            // Feedback Panel logic
+            const feedbackPanel = document.getElementById('feedback-panel');
+            if (isAnswered) {
+                const isCorrect = userSelected === q.correctIndex;
+                feedbackPanel.classList.remove('hidden');
+
+                if (isCorrect) {
+                    feedbackPanel.className = "mt-6 p-4 rounded-2xl border bg-emerald-50 border-emerald-200 text-emerald-900";
+                    document.getElementById('feedback-icon').innerHTML = "🎉";
+                    document.getElementById('feedback-title').innerText = "Jawaban Kamu Benar!";
+                } else {
+                    feedbackPanel.className = "mt-6 p-4 rounded-2xl border bg-rose-50 border-rose-200 text-rose-900";
+                    document.getElementById('feedback-icon').innerHTML = "❌";
+                    document.getElementById('feedback-title').innerText = `Kurang Tepat! Jawaban benar: (${optionLabels[q.correctIndex]})`;
+                }
+                document.getElementById('feedback-explanation').innerHTML = q.explanation;
+            } else {
+                feedbackPanel.classList.add('hidden');
+            }
+
+            // Update Navigation Buttons
+            document.getElementById('btn-prev').disabled = currentQuestionIndex === 0;
+            document.getElementById('btn-prev').style.opacity = currentQuestionIndex === 0 ? "0.5" : "1";
+
+            const btnNext = document.getElementById('btn-next');
+            if (currentQuestionIndex === quizData.length - 1) {
+                btnNext.innerHTML = `Lihat Hasil <i class="fas fa-trophy ml-1"></i>`;
+                btnNext.className = "px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition text-sm flex items-center gap-2";
+            } else {
+                btnNext.innerHTML = `Selanjutnya <i class="fas fa-arrow-right ml-1"></i>`;
+                btnNext.className = "px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md shadow-indigo-200 transition text-sm flex items-center gap-2";
+            }
+
+            renderQuestionGrid();
+        }
+
+        function getOptionBadgeStyle(optIdx, isAnswered, correctIdx, userSelected) {
+            if (isAnswered) {
+                if (optIdx === correctIdx) return "bg-emerald-500 text-white";
+                if (optIdx === userSelected) return "bg-rose-500 text-white";
+                return "bg-slate-200 text-slate-500";
+            }
+            return "bg-slate-100 text-slate-600 group-hover:bg-indigo-600 group-hover:text-white";
+        }
+
+        // Answer Selection Handler
+        function selectAnswer(optionIndex) {
+            if (userAnswers.hasOwnProperty(currentQuestionIndex)) return; // Already answered
+
+            userAnswers[currentQuestionIndex] = optionIndex;
+            saveStateToStorage();
+            displayCurrentQuestion();
+            updateProgressBar();
+
+            // Confetti effect if correct
+            if (optionIndex === quizData[currentQuestionIndex].correctIndex) {
+                if (typeof confetti === 'function') {
+                    confetti({
+                        particleCount: 25,
+                        spread: 50,
+                        origin: { y: 0.85 }
+                    });
+                }
+            }
+        }
+
+        // Navigation
+        function nextQuestion() {
+            if (currentQuestionIndex < quizData.length - 1) {
+                currentQuestionIndex++;
+                saveStateToStorage();
+                displayCurrentQuestion();
+            } else {
+                finishQuizSummary();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                saveStateToStorage();
+                displayCurrentQuestion();
+            }
+        }
+
+        function jumpToQuestion(index) {
+            currentQuestionIndex = index;
+            saveStateToStorage();
+            displayCurrentQuestion();
+        }
+
+        // Progress & Score Calculation
+        function calculateScore() {
+            let correctCount = 0;
+            const answeredTotal = Object.keys(userAnswers).length;
+
+            quizData.forEach((q, idx) => {
+                if (userAnswers.hasOwnProperty(idx) && userAnswers[idx] === q.correctIndex) {
+                    correctCount++;
+                }
+            });
+
+            // Each question is worth 2.5 points (40 * 2.5 = 100 max)
+            const scoreNum = Math.round(correctCount * 2.5);
+
+            return {
+                correctCount,
+                answeredTotal,
+                scoreNum
+            };
+        }
+
+        function updateProgressBar() {
+            const { correctCount, answeredTotal, scoreNum } = calculateScore();
+            const totalQ = quizData.length;
+            const percent = Math.round((answeredTotal / totalQ) * 100);
+
+            document.getElementById('header-progress-count').innerText = answeredTotal;
+            document.getElementById('progress-percent-text').innerText = `Kemajuan Kuis: ${percent}% (${answeredTotal}/${totalQ})`;
+            document.getElementById('score-live-text').innerText = `Skor Saat Ini: ${scoreNum} / 100`;
+            document.getElementById('progress-bar-fill').style.width = `${percent}%`;
+        }
+
+        // Summary Modal
+        function finishQuizSummary() {
+            const { correctCount, answeredTotal, scoreNum } = calculateScore();
+
+            document.getElementById('result-score-num').innerText = scoreNum;
+            document.getElementById('result-correct-count').innerText = `${correctCount} / 40`;
+
+            // Dynamic Trophy & Title
+            const emojiEl = document.getElementById('result-emoji');
+            const titleEl = document.getElementById('result-title');
+
+            if (scoreNum >= 85) {
+                emojiEl.innerText = "🏆";
+                titleEl.innerText = "Luar Biasa! Master Pecahan!";
+            } else if (scoreNum >= 70) {
+                emojiEl.innerText = "🌟";
+                titleEl.innerText = "Hebat! Hasil Memuaskan!";
+            } else if (scoreNum >= 50) {
+                emojiEl.innerText = "👍";
+                titleEl.innerText = "Bagus! Terus Tingkatkan!";
+            } else {
+                emojiEl.innerText = "📚";
+                titleEl.innerText = "Tetap Semangat Belajar!";
+            }
+
+            // Category breakdown details
+            const categories = {};
+            quizData.forEach((q, idx) => {
+                if (!categories[q.category]) {
+                    categories[q.category] = { total: 0, correct: 0 };
+                }
+                categories[q.category].total++;
+                if (userAnswers.hasOwnProperty(idx) && userAnswers[idx] === q.correctIndex) {
+                    categories[q.category].correct++;
+                }
+            });
+
+            let breakdownHTML = `<p class="font-bold text-slate-700 mb-2 border-b pb-1">Rincian per Topik:</p>`;
+            for (let cat in categories) {
+                const c = categories[cat];
+                breakdownHTML += `
+                    <div class="flex justify-between items-center text-slate-600">
+                        <span>${cat}</span>
+                        <span class="font-bold text-indigo-600">${c.correct} / ${c.total} Benar</span>
+                    </div>
+                `;
+            }
+
+            document.getElementById('result-breakdown').innerHTML = breakdownHTML;
+
+            // Show Modal
+            const modal = document.getElementById('result-modal');
+            const content = document.getElementById('result-modal-content');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            }, 10);
+
+            if (scoreNum >= 70 && typeof confetti === 'function') {
+                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+            }
+        }
+
+        function closeResultModal() {
+            const modal = document.getElementById('result-modal');
+            const content = document.getElementById('result-modal-content');
+            content.classList.remove('scale-100', 'opacity-100');
+            content.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 200);
+        }
+    </script>
+</body>
+</html>
